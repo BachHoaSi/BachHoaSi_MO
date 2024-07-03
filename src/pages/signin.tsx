@@ -5,9 +5,9 @@ import { Button, Input, Page, Text } from "zmp-ui";
 import useSetHeader from "../hooks/useSetHeader";
 import { changeStatusBarColor } from "../services";
 import { emailState, passwordState } from "../state"; // Import state
+import { getAccessToken, getPhoneNumber } from "zmp-sdk/apis";
+import bcrypt from "bcryptjs";
 
-
-// Sửa đổi ở đây:
 const Signin: React.FunctionComponent = () => {
   const [email, setEmail] = useRecoilState(emailState);
   const [password, setPassword] = useRecoilState(passwordState);
@@ -27,7 +27,7 @@ const Signin: React.FunctionComponent = () => {
 
         if (response.ok) {
           const data = await response.json();
-          localStorage.setItem("token", data.token);
+          sessionStorage.setItem("token", data.token);
           navigate("/"); // Chuyển hướng đến trang HomePage
         } else {
           // Xử lý lỗi
@@ -38,6 +38,65 @@ const Signin: React.FunctionComponent = () => {
     },
     [email, password]
   );
+
+  const handleLoginWithPhone = useCallback(async () => {
+    try {
+      const { token } = await new Promise((resolve, reject) => {
+        getPhoneNumber({
+          success: (data) => {
+            resolve(data);
+          },
+          fail: (error) => reject(error),
+        });
+      });
+
+      // Lưu access_token vào sessionStorage
+      const accessToken = await new Promise((resolve, reject) => {
+        getAccessToken({
+          success: (data) => {
+            sessionStorage.setItem("access_token", data);
+            console.log("access_token:", data);
+            resolve(data);
+          },
+          fail: (error) => reject(error),
+        });
+      });
+
+      // Trích xuất số điện thoại từ token
+      const phoneNumber = await fetch(`https://graph.zalo.me/v2.0/me/info`, {
+        headers: {
+          access_token: accessToken,
+          code: token,
+          secret_key: "0TR1rUOW664SjBe84Y4m",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => data.data.number);
+
+      // Hash số điện thoại bằng bcryptjs
+      const hashedPhoneNumber = await bcrypt.hash(phoneNumber, 3);
+      console.log("Hashed phone number:", hashedPhoneNumber);
+
+      navigate("/shop");
+
+      // // Gọi API để đăng nhập bằng số điện thoại
+      // const loginResponse = await fetch("/api/login-with-phone", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ phoneNumber: hashedPhoneNumber }),
+      // });
+
+      // if (loginResponse.ok) {
+      //   const data = await loginResponse.json();
+      //   sessionStorage.setItem("token", data.token);
+      //   navigate("/"); // Chuyển hướng đến trang HomePage
+      // } else {
+      //   // Xử lý lỗi
+      // }
+    } catch (error) {
+      console.log("error:", error);
+    }
+  }, []);
 
   useEffect(() => {
     setHeader({
@@ -78,9 +137,23 @@ const Signin: React.FunctionComponent = () => {
               className="cus-input-search"
             />
           </div>
-          <Button type="highlight" htmlType="submit" className="w-full">
-            Đăng nhập
+          <Button
+            onClick={handleSubmit}
+            type="highlight"
+            htmlType="submit"
+            className="w-full"
+          >
+            {"Đăng nhập"}
           </Button>
+          <div className="mt-4 text-center">
+            <Button
+              type="link"
+              onClick={handleLoginWithPhone}
+              className="text-primary"
+            >
+              Đăng nhập bằng số điện thoại
+            </Button>
+          </div>
         </form>
       </div>
     </Page>

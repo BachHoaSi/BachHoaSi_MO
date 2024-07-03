@@ -119,7 +119,12 @@ export const passwordState = atom<string>({
   default: "",
 });
 
+export const phoneNumberState = atom<string>({
+  key: "phoneNumber",
+  default: "",
+});
+
 export const nameState = atom<string>({
-  key: "name", 
-  default: "", 
+  key: "name",
+  default: "",
 });

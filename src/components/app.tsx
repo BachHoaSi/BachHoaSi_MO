@@ -8,7 +8,7 @@ import {
   Spinner,
   ZMPRouter,
 } from "zmp-ui";
-import HomePage from "../pages";
+import Menu from "../pages/menu";
 import DetailProduct from "../pages/detail-product";
 import Signin from "../pages/signin";
 import Signup from "../pages/signup";
@@ -41,9 +41,9 @@ const MyApp = () => {
               <ZMPRouter>
                 <Header />
                 <AnimationRoutes>
-                  <Route path="/signin" element={<Signin></Signin>}></Route>
+                  <Route path="/" element={<Signin></Signin>}></Route>
                   <Route path="/signup" element={<Signup></Signup>}></Route>
-                  <Route path="/" element={<HomePage></HomePage>}></Route>
+                  <Route path="/menu" element={<Menu></Menu>}></Route>
                   <Route
                     path="/finish-order"
                     element={<FinishOrder></FinishOrder>}
