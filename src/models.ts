@@ -1,3 +1,4 @@
+import Joi from "joi";
 import { ReactNode } from "react";
 
 export enum OrderStatus {
@@ -183,7 +184,7 @@ export type StoreDetailsResponse = {
   storeLevel: number;
 };
 
-type OrderResponse = {
+export type OrderResponse = {
   orderId: number;
   totalPrice: number;
   payingMethod: PayingMethod;
@@ -195,3 +196,23 @@ type OrderResponse = {
   deliveryFeedback: string;
   createdDate: Date;
 };
+
+export type ResponseWrapper <T = any> = {
+  data: T;
+  code: string;
+  isSuccess: boolean;
+  status: string;
+  message: string | null;
+}
+
+export type PaginationResponseWrapper <T = any> = {
+  content: T[];
+  pageNo: number;
+  pageSize: number;
+  totalElement: number;
+  totalPage: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+}
+
+export type ErrorResponse = ResponseWrapper<null>;
