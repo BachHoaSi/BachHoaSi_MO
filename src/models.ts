@@ -96,3 +96,42 @@ export type ProductInfoPicked = {
   productId: number;
   isUpdate?: boolean;
 };
+
+type Cart = {
+  cartProductMenuId: string;
+  itemId: string;
+  cartId: string;
+  storeId: string;
+  productId: string;
+  quantity: string;
+  createdDate: string;
+  updatedDate: string;
+}
+
+export type CartRequest = Pick<Cart, 'cartProductMenuId' | 'storeId' | 'cartId' | 'productId' | 'quantity'>;
+
+export type CartDeleteRequest = Pick<Cart, 'itemId' | 'cartId' | 'storeId'>;
+
+export type CartResponse = Pick<Cart, 'cartId' | 'createdDate' | 'updatedDate'>;
+
+export type CartProductMenuResponse = Pick<Cart, 'quantity'> & {
+  id: string;
+  product: ProductMenuResponse;
+}
+
+export type ProductResponse = {
+  productCode: string;
+  name: string;
+  basePrice: number;
+  description: string;
+  stockQuantity: number;
+  urlImage: string;
+  categoryCode: string;
+  categoryName: string;
+};
+
+export type ProductMenuResponse = {
+  id: number;
+  product: ProductResponse;
+  price: number;
+};
