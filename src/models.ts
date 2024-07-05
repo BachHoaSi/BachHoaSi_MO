@@ -1,6 +1,13 @@
 import { ReactNode } from "react";
 
-export type OrderStatus = "pending" | "shipping" | "finish";
+export enum OrderStatus {
+  PENDING,
+  ACCEPTED,
+  PICKED_UP,
+  IN_TRANSIT,
+  DELIVERED,
+  CANCELLED,
+}
 
 export type Options = {
   name: string;
@@ -134,4 +141,57 @@ export type ProductMenuResponse = {
   id: number;
   product: ProductResponse;
   price: number;
+};
+
+export enum PayingMethod {
+  COD,
+  BANKING
+}
+
+type Order = {
+  storeId: string;
+  orderId: string;
+  payingMethod: PayingMethod;
+} & Pick<Cart, 'cartId'>;
+
+export type OrderRequest = Pick<Order, 'cartId' | 'payingMethod' | 'storeId'>;
+
+export type FeedbackRequest = Pick<Order, 'storeId' | 'orderId'> 
+& {
+  orderFeedback: string;
+  deliveryFeedback: string;
+}
+
+type StoreData = {
+  id: number;
+  name: string;
+  location: string;
+  phoneNumber: string;
+  zaloId: string;
+}
+
+export type StoreCreateRequest = Omit<StoreData, 'id'>;
+
+export type StoreUpdateRequest = Omit<StoreData, 'zaloId'>;
+
+export type StoreDetailsResponse = {
+  name: string;
+  storeType: string;
+  point: number;
+  phoneNumber: string;
+  location: string;
+  storeLevel: number;
+};
+
+type OrderResponse = {
+  orderId: number;
+  totalPrice: number;
+  payingMethod: PayingMethod;
+  orderStatus: OrderStatus;
+  point: number;
+  storeName: string;
+  storeAddress: string;
+  orderFeedback: string;
+  deliveryFeedback: string;
+  createdDate: Date;
 };
