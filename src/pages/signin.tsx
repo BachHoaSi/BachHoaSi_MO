@@ -1,46 +1,40 @@
+import bcrypt from "bcryptjs";
 import React, { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
+import { getAccessToken, getPhoneNumber, getUserInfo } from "zmp-sdk/apis";
 import { Button, Input, Page, Text } from "zmp-ui";
 import useSetHeader from "../hooks/useSetHeader";
 import { changeStatusBarColor } from "../services";
-import { emailState, passwordState } from "../state"; // Import state
-import { getAccessToken, getPhoneNumber } from "zmp-sdk/apis";
-import bcrypt from "bcryptjs";
+import api from "../services/api";
+import {
+  passwordState,
+  phoneNumberState,
+  usernameState,
+  storeIdState,
+} from "../state"; // Import state
+
+interface LoginResponse {
+  isSuccess: boolean;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    storeId: number;
+    tokenType: string;
+  };
+}
 
 const Signin: React.FunctionComponent = () => {
-  const [email, setEmail] = useRecoilState(emailState);
+  const [username, setUsername] = useRecoilState(usernameState);
   const [password, setPassword] = useRecoilState(passwordState);
+  const [phoneNumber, setPhoneNumber] = useRecoilState(phoneNumberState);
+  const [storeId, setStoreId] = useRecoilState(storeIdState);
   const navigate = useNavigate();
   const setHeader = useSetHeader();
 
-  const handleSubmit = useCallback(
-    async (event) => {
-      event.preventDefault();
-      // Gọi API để đăng nhập
-      try {
-        const response = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          sessionStorage.setItem("token", data.token);
-          navigate("/"); // Chuyển hướng đến trang HomePage
-        } else {
-          // Xử lý lỗi
-        }
-      } catch (error) {
-        // Xử lý lỗi
-      }
-    },
-    [email, password]
-  );
-
-  const handleLoginWithPhone = useCallback(async () => {
+  const handleCustomerLogin = useCallback(async () => {
     try {
+      // Lấy thông tin số điện thoại từ Zalo
       const { token } = await new Promise((resolve, reject) => {
         getPhoneNumber({
           success: (data) => {
@@ -50,49 +44,68 @@ const Signin: React.FunctionComponent = () => {
         });
       });
 
-      // Lưu access_token vào sessionStorage
-      const accessToken = await new Promise((resolve, reject) => {
+      // Lưu access_token từ zalo vào sessionStorage
+      const accessTokenZalo = await new Promise((resolve, reject) => {
         getAccessToken({
           success: (data) => {
-            sessionStorage.setItem("access_token", data);
-            console.log("access_token:", data);
-            resolve(data);
+            sessionStorage.setItem("accessTokenZalo", data as string);
+            console.log("access_token_zalo:", data);
+            resolve(data as string);
           },
           fail: (error) => reject(error),
         });
       });
 
-      // Trích xuất số điện thoại từ token
-      const phoneNumber = await fetch(`https://graph.zalo.me/v2.0/me/info`, {
-        headers: {
-          access_token: accessToken,
-          code: token,
-          secret_key: "0TR1rUOW664SjBe84Y4m",
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => data.data.number);
+      // // Trích xuất số điện thoại từ token
+      // const phoneNumber = await fetch(`https://graph.zalo.me/v2.0/me/info`, {
+      //   headers: {
+      //     access_token: accessTokenZalo,
+      //     code: token,
+      //     secret_key: "0TR1rUOW664SjBe84Y4m",
+      //   },
+      // })
+      //   .then((response) => response.json())
+      //   .then((data) => data.data.number);
+
+      const phoneNumber = "84333336938";
 
       // Hash số điện thoại bằng bcryptjs
       const hashedPhoneNumber = await bcrypt.hash(phoneNumber, 3);
       console.log("Hashed phone number:", hashedPhoneNumber);
 
-      navigate("/shop");
-
-      // // Gọi API để đăng nhập bằng số điện thoại
-      // const loginResponse = await fetch("/api/login-with-phone", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ phoneNumber: hashedPhoneNumber }),
+      // // Gọi API getUserInfo của Zalo
+      // const { userInfo } = await new Promise((resolve, reject) => {
+      //   getUserInfo({
+      //     success: (data) => {
+      //       resolve(data);
+      //     },
+      //     fail: (error) => reject(error),
+      //   });
       // });
 
-      // if (loginResponse.ok) {
-      //   const data = await loginResponse.json();
-      //   sessionStorage.setItem("token", data.token);
-      //   navigate("/"); // Chuyển hướng đến trang HomePage
-      // } else {
-      //   // Xử lý lỗi
-      // }
+      const zaloId = "3368637342326461234";
+
+      // Gọi API đăng nhập với vai trò customer
+      const loginResponse = await api.post<LoginResponse>("/auth/zalo/login", {
+        zaloId: zaloId,
+        hashPhone: hashedPhoneNumber,
+      });
+
+      if (loginResponse.data.isSuccess) {
+        sessionStorage.setItem(
+          "accessToken",
+          loginResponse.data.data.accessToken
+        );
+        sessionStorage.setItem(
+          "storeId",
+          loginResponse.data.data.storeId.toString()
+        );
+        console.log(loginResponse.data.message);
+        console.log(loginResponse.data.data);
+        navigate("/"); // Chuyển hướng đến trang HomePage
+      } else {
+        console.log(loginResponse.data.message);
+      }
     } catch (error) {
       console.log("error:", error);
     }
@@ -107,24 +120,31 @@ const Signin: React.FunctionComponent = () => {
     changeStatusBarColor("secondary");
   }, []);
 
+  const handleGoToSignup = useCallback(() => {
+    navigate("/signup");
+  }, [navigate]);
+
   return (
     <Page>
       <div className="bg-primary">
         <div className="p-4">
           <Text type="h2" className="text-center text-white font-bold">
-            Đăng nhập
+            Bach Hoa Si
           </Text>
         </div>
       </div>
       <div className="bg-gray-100 h-3" />
       <div className="bg-white p-4">
-        <form onSubmit={handleSubmit}>
+        <p className="text-center text-black font-bold">
+          Đăng nhập với vai trò shipper
+        </p>
+        <form onSubmit={handleCustomerLogin}>
           <div className="mb-4">
             <Input
               type="text"
-              placeholder="Email"
-              value={email as string} // Specify the type of 'email' as string
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="cus-input-search"
             />
           </div>
@@ -132,13 +152,13 @@ const Signin: React.FunctionComponent = () => {
             <Input
               type="password"
               placeholder="Mật khẩu"
-              value={password as string} // Specify the type of 'password' as string
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="cus-input-search"
             />
           </div>
           <Button
-            onClick={handleSubmit}
+            // onClick={}
             type="highlight"
             htmlType="submit"
             className="w-full"
@@ -147,13 +167,19 @@ const Signin: React.FunctionComponent = () => {
           </Button>
           <div className="mt-4 text-center">
             <Button
-              type="link"
-              onClick={handleLoginWithPhone}
+              type="highlight"
+              onClick={handleCustomerLogin}
               className="text-primary"
             >
-              Đăng nhập bằng số điện thoại
+              Đăng nhập với vai trò store
             </Button>
           </div>
+          <p className="mt-4 text-center">
+            Chưa có tài khoản?{" "}
+            <a style={{ color: "blue" }} onClick={handleGoToSignup}>
+              Đăng ký ngay!
+            </a>
+          </p>
         </form>
       </div>
     </Page>

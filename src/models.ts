@@ -23,12 +23,17 @@ export type CartProduct = {
 
 export type Product = {
   id: number;
-  imgProduct: string;
-  nameProduct: string;
-  salePrice: number | string;
-  retailPrice: number | string;
-  description: string;
-  options: Options[];
+  product: {
+    name: string;
+    description: string;
+    productCode: string;
+    basePrice: number;
+    stockQuantity: number;
+    urlImage: string;
+    categoryCode: string;
+    categoryName: string;
+  };
+  price: number;
 };
 
 export type Store = {
@@ -95,4 +100,18 @@ export type AddressFormType = {
 export type ProductInfoPicked = {
   productId: number;
   isUpdate?: boolean;
+};
+
+export type Pageable = {
+  page: number;
+  size: number;
+  storeId: number;
+};
+
+export type ResponseObject = {
+  data: any;
+  code: string;
+  isSuccess: boolean;
+  status: string;
+  message: string;
 };

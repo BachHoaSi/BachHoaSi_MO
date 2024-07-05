@@ -18,12 +18,9 @@ export const storeState = selector<Store>({
   },
 });
 
-export const productState = selector<Product[]>({
+export const productState = atom<Product[]>({
   key: "product",
-  get: ({ get }) => {
-    const store = get(storeState);
-    return store.listProducts;
-  },
+  default: [],
 });
 
 export const cartState = atom<StoreOrder>({
@@ -44,7 +41,7 @@ export const cartTotalPriceState = selector<number>({
       (total, item) =>
         total +
         Number(item.order.quantity) *
-          Number(products.find((product) => product.id === item.id)?.salePrice),
+          Number(products.find((product) => product.id === item.id)?.price),
       0
     );
     return result;
@@ -69,19 +66,6 @@ export const activeCateState = atom<number>({
 export const activeFilterState = atom<string>({
   key: "activeFilter",
   default: filter[0].key,
-});
-
-export const storeProductResultState = selector<Product[]>({
-  key: "storeProductResult",
-  get: ({ get }) => {
-    get(activeCateState);
-    get(searchProductState);
-
-    const store = get(storeState);
-    const pos = getRandomInt(store.listProducts.length - 122, 0);
-    const num = getRandomInt(120, 50);
-    return [...store.listProducts.slice(pos, pos + num)];
-  },
 });
 
 export const addressState = atom<Address>({
@@ -109,8 +93,8 @@ export const productInfoPickedState = atom<ProductInfoPicked>({
   default: initialProductInfoPickedState,
 });
 
-export const emailState = atom<string>({
-  key: "email",
+export const usernameState = atom<string>({
+  key: "username",
   default: "",
 });
 
@@ -127,4 +111,14 @@ export const phoneNumberState = atom<string>({
 export const nameState = atom<string>({
   key: "name",
   default: "",
+});
+
+export const addressStateSignup = atom<string>({
+  key: "addressStateSignup",
+  default: "",
+});
+
+export const storeIdState = atom<number>({
+  key: "storeId",
+  default: -1,
 });

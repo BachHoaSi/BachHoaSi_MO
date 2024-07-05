@@ -6,7 +6,16 @@ export default () => {
   return defineConfig({
     root: "./src",
     base: "",
-    plugins: [reactRefresh()],
+    plugins: [reactRefresh(),
+    {
+      name: "override-config",
+      config: () => ({
+        build: {
+          target: "esnext",
+        },
+      }),
+    }
+    ],
     build: {
       polyfillModulePreload: false,
     },
